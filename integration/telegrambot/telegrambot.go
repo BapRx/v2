@@ -9,19 +9,25 @@ import (
 	"fmt"
 	"html/template"
 	"strconv"
+	"time"
 
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"miniflux.app/logger"
 	"miniflux.app/model"
 )
 
 // PushEntry pushes entry to telegram chat using integration settings provided
-func PushEntry(entry *model.Entry, botToken, chatID string) error {
+func PushEntry(entry *model.Entry, botToken string, chatID string, sendContent bool) error {
 	bot, err := tgbotapi.NewBotAPI(botToken)
 	if err != nil {
 		return fmt.Errorf("telegrambot: bot creation failed: %w", err)
 	}
 
-	tpl, err := template.New("message").Parse("{{ .Title }}\n<a href=\"{{ .URL }}\">{{ .URL }}</a>")
+	tplStr := "<b>{{ .Title }}</b>"
+	if sendContent {
+		tplStr += "\n\n{{ .Content }}"
+	}
+	tpl, err := template.New("message").Parse(tplStr)
 	if err != nil {
 		return fmt.Errorf("telegrambot: template parsing failed: %w", err)
 	}
@@ -32,19 +38,30 @@ func PushEntry(entry *model.Entry, botToken, chatID string) error {
 	}
 
 	chatIDInt, _ := strconv.ParseInt(chatID, 10, 64)
-	msg := tgbotapi.NewMessage(chatIDInt, result.String())
+	resultStr := result.String()
+	if result.Len() > 4096 {
+		resultStr = resultStr[0:4096]
+	}
+	msg := tgbotapi.NewMessage(chatIDInt, resultStr)
 	msg.ParseMode = tgbotapi.ModeHTML
 	msg.DisableWebPagePreview = false
 
+	buttonRow := tgbotapi.NewInlineKeyboardRow(tgbotapi.NewInlineKeyboardButtonURL("Open", entry.URL))
 	if entry.CommentsURL != "" {
-		msg.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(
-			tgbotapi.NewInlineKeyboardRow(
-				tgbotapi.NewInlineKeyboardButtonURL("Comments", entry.CommentsURL),
-			))
+		commentButton := tgbotapi.NewInlineKeyboardButtonURL("Comments", entry.CommentsURL)
+		buttonRow = append(buttonRow, commentButton)
 	}
-
+	msg.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(buttonRow)
 	if _, err := bot.Send(msg); err != nil {
-		return fmt.Errorf("telegrambot: sending message failed: %w", err)
+		if err.Error() == "Too Many Requests" {
+			logger.Debug("telegrambot: rate limited while sending message, sleeping for 5 seconds")
+			time.Sleep(5)
+			if _, err := bot.Send(msg); err != nil {
+				return fmt.Errorf("telegrambot: sending message failed: %w", err)
+			}
+		} else {
+			return fmt.Errorf("telegrambot: sending message failed: %w", err)
+		}
 	}
 
 	return nil

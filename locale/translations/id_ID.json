@@ -78,7 +78,7 @@
     "entry.shared_entry.title": "Buka tautan publik",
     "entry.shared_entry.label": "Bagikan",
     "entry.estimated_reading_time": [
-    "%d menit untuk dibaca"
+        "%d menit untuk dibaca"
     ],
     "page.shared_entries.title": "Entri yang Dibagikan",
     "page.unread.title": "Belum Dibaca",
@@ -88,7 +88,7 @@
     "page.categories.entries": "Artikel",
     "page.categories.feeds": "Langganan",
     "page.categories.feed_count": [
-    "Ada %d umpan."
+        "Ada %d umpan."
     ],
     "page.categories.unread_counter": "Jumlah entri yang belum dibaca",
     "page.new_category.title": "Kategori Baru",
@@ -100,7 +100,7 @@
     "page.feeds.unread_counter": "Jumlah entri yang belum dibaca",
     "page.feeds.read_counter": "Jumlah entri yang telah dibaca",
     "page.feeds.error_count": [
-    "%d galat"
+        "%d galat"
     ],
     "page.history.title": "Riwayat",
     "page.import.title": "Impor",
@@ -351,6 +351,7 @@
     "form.integration.telegram_bot_activate": "Kirim artikel baru ke percakapan Telegram",
     "form.integration.telegram_bot_token": "Token Bot",
     "form.integration.telegram_chat_id": "ID Obrolan",
+    "form.integration.telegram_bot_send_content": "TODO",
     "form.integration.linkding_activate": "Simpan artikel ke Linkding",
     "form.integration.linkding_endpoint": "Titik URL API Linkding",
     "form.integration.linkding_api_key": "Kunci API Linkding",
@@ -366,22 +367,22 @@
     "time_elapsed.yesterday": "kemarin",
     "time_elapsed.now": "baru saja",
     "time_elapsed.minutes": [
-    "%d menit yang lalu"
+        "%d menit yang lalu"
     ],
     "time_elapsed.hours": [
-    "%d jam yang lalu"
+        "%d jam yang lalu"
     ],
     "time_elapsed.days": [
-    "%d hari yang lalu"
+        "%d hari yang lalu"
     ],
     "time_elapsed.weeks": [
-    "%d pekan yang lalu"
+        "%d pekan yang lalu"
     ],
     "time_elapsed.months": [
-    "%d bulan yang lalu"
+        "%d bulan yang lalu"
     ],
     "time_elapsed.years": [
-    "%d tahun yang lalu"
+        "%d tahun yang lalu"
     ],
     "This feed already exists (%s)": "Umpan ini sudah ada (%s)",
     "Unable to fetch feed (Status Code = %d)": "Tidak bisa mengambil umpan (Kode Status = %d)",
