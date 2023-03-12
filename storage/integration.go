@@ -139,6 +139,28 @@ func (s *Storage) UserByTelegramChatID(chatID int64) (*model.User, error) {
 	}
 }
 
+// UserByTelegramChatID returns a user by using the Telegram chat ID.
+func (s *Storage) EntryByHash(hash string) (*model.Entry, error) {
+	query := `
+		SELECT
+			id, url, comments_url
+		FROM
+			entries
+		WHERE hash LIKE $1 || '%'
+	`
+
+	var entry model.Entry
+	err := s.db.QueryRow(query, hash).Scan(&entry.ID, &entry.URL, &entry.CommentsURL)
+	switch {
+	case err == sql.ErrNoRows:
+		return nil, nil
+	case err != nil:
+		return nil, fmt.Errorf("store: unable to fetch entry: %v", err)
+	default:
+		return &entry, nil
+	}
+}
+
 // Integration returns user integration settings.
 func (s *Storage) Integration(userID int64) (*model.Integration, error) {
 	query := `

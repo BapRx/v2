@@ -40,7 +40,14 @@ func PushEntry(entry *model.Entry, botToken, chatID string, sendContent bool) er
 	msg.ParseMode = tgbotapi.ModeHTML
 	msg.DisableWebPagePreview = false
 
-	buttonRow := tgbotapi.NewInlineKeyboardRow(tgbotapi.NewInlineKeyboardButtonURL("Open", entry.URL))
+	callbackData := fmt.Sprintf("read/%s", entry.Hash)
+	if len(callbackData) > 64 {
+		callbackData = callbackData[:64]
+	}
+	buttonRow := tgbotapi.NewInlineKeyboardRow(
+		tgbotapi.NewInlineKeyboardButtonURL("Open", entry.URL),
+		tgbotapi.NewInlineKeyboardButtonData("Mark as read", callbackData),
+	)
 	if entry.CommentsURL != "" {
 		commentButton := tgbotapi.NewInlineKeyboardButtonURL("Comments", entry.CommentsURL)
 		buttonRow = append(buttonRow, commentButton)
