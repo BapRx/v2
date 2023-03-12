@@ -12,7 +12,7 @@ import (
 	"miniflux.app/model"
 )
 
-// HasDuplicateFeverUsername checks if another user have the same Fever username.
+// HasDuplicateFeverUsername checks if another user has the same Fever username.
 func (s *Storage) HasDuplicateFeverUsername(userID int64, feverUsername string) bool {
 	query := `SELECT true FROM integrations WHERE user_id != $1 AND fever_username=$2`
 	var result bool
@@ -20,11 +20,19 @@ func (s *Storage) HasDuplicateFeverUsername(userID int64, feverUsername string) 
 	return result
 }
 
-// HasDuplicateGoogleReaderUsername checks if another user have the same Google Reader username.
+// HasDuplicateGoogleReaderUsername checks if another user has the same Google Reader username.
 func (s *Storage) HasDuplicateGoogleReaderUsername(userID int64, googleReaderUsername string) bool {
 	query := `SELECT true FROM integrations WHERE user_id != $1 AND googlereader_username=$2`
 	var result bool
 	s.db.QueryRow(query, userID, googleReaderUsername).Scan(&result)
+	return result
+}
+
+// HasDuplicateTelegramChatID checks if another user has the same Telegram chat ID.
+func (s *Storage) HasDuplicateTelegramChatID(userID int64, telegram_bot_chat_id string) bool {
+	query := `SELECT true FROM integrations WHERE user_id != $1 AND telegram_bot_chat_id=$2`
+	var result bool
+	s.db.QueryRow(query, userID, telegram_bot_chat_id).Scan(&result)
 	return result
 }
 
@@ -104,6 +112,31 @@ func (s *Storage) GoogleReaderUserGetIntegration(username string) (*model.Integr
 	}
 
 	return &integration, nil
+}
+
+// UserByTelegramChatID returns a user by using the Telegram chat ID.
+func (s *Storage) UserByTelegramChatID(chatID int64) (*model.User, error) {
+	query := `
+		SELECT
+			users.id, users.is_admin, users.timezone
+		FROM
+			users
+		LEFT JOIN
+			integrations ON integrations.user_id=users.id
+		WHERE
+			integrations.telegram_bot_enabled='t' AND integrations.telegram_bot_chat_id=$1
+	`
+
+	var user model.User
+	err := s.db.QueryRow(query, chatID).Scan(&user.ID, &user.IsAdmin, &user.Timezone)
+	switch {
+	case err == sql.ErrNoRows:
+		return nil, nil
+	case err != nil:
+		return nil, fmt.Errorf("store: unable to fetch user: %v", err)
+	default:
+		return &user, nil
+	}
 }
 
 // Integration returns user integration settings.

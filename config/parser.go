@@ -225,6 +225,10 @@ func (p *Parser) parseLines(lines []string) (err error) {
 			randomKey := make([]byte, 16)
 			rand.Read(randomKey)
 			p.opts.proxyPrivateKey = parseBytes(value, randomKey)
+		case "TELEGRAM_BOT_TOKEN":
+			p.opts.telegramBotToken = parseString(value, defaultTelegramBotToken)
+		case "TELEGRAM_BOT_ALLOWED_CHATS":
+			p.opts.telegramBotAllowedChats = parseStringList(value, []string{defaultTelegramBotAllowedChats})
 		}
 	}
 

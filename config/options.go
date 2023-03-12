@@ -76,6 +76,8 @@ const (
 	defaultMetricsPassword                    = ""
 	defaultWatchdog                           = true
 	defaultInvidiousInstance                  = "yewtu.be"
+	defaultTelegramBotToken                   = ""
+	defaultTelegramBotAllowedChats            = ""
 )
 
 var defaultHTTPClientUserAgent = "Mozilla/5.0 (compatible; Miniflux/" + version.Version + "; +https://miniflux.app)"
@@ -151,6 +153,8 @@ type Options struct {
 	watchdog                           bool
 	invidiousInstance                  string
 	proxyPrivateKey                    []byte
+	telegramBotToken                   string
+	telegramBotAllowedChats            []string
 }
 
 // NewOptions returns Options with default values.
@@ -220,6 +224,8 @@ func NewOptions() *Options {
 		watchdog:                           defaultWatchdog,
 		invidiousInstance:                  defaultInvidiousInstance,
 		proxyPrivateKey:                    randomKey,
+		telegramBotToken:                   defaultTelegramBotToken,
+		telegramBotAllowedChats:            []string{defaultTelegramBotAllowedChats},
 	}
 }
 
@@ -547,6 +553,16 @@ func (o *Options) ProxyPrivateKey() []byte {
 	return o.proxyPrivateKey
 }
 
+// TelegramBotToken returns the Bot token to interact with the Telegram API
+func (o *Options) TelegramBotToken() string {
+	return o.telegramBotToken
+}
+
+// TelegramBotAllowedChats returns a list of allowed Telegram chats ID to interact with the bot
+func (o *Options) TelegramBotAllowedChats() []string {
+	return o.telegramBotAllowedChats
+}
+
 // SortedOptions returns options as a list of key value pairs, sorted by keys.
 func (o *Options) SortedOptions(redactSecret bool) []*Option {
 	var keyValues = map[string]interface{}{
@@ -559,39 +575,39 @@ func (o *Options) SortedOptions(redactSecret bool) []*Option {
 		"BATCH_SIZE":                             o.batchSize,
 		"CERT_DOMAIN":                            o.certDomain,
 		"CERT_FILE":                              o.certFile,
+		"CLEANUP_ARCHIVE_BATCH_SIZE":             o.cleanupArchiveBatchSize,
 		"CLEANUP_ARCHIVE_READ_DAYS":              o.cleanupArchiveReadDays,
 		"CLEANUP_ARCHIVE_UNREAD_DAYS":            o.cleanupArchiveUnreadDays,
-		"CLEANUP_ARCHIVE_BATCH_SIZE":             o.cleanupArchiveBatchSize,
 		"CLEANUP_FREQUENCY_HOURS":                o.cleanupFrequencyHours,
 		"CLEANUP_REMOVE_SESSIONS_DAYS":           o.cleanupRemoveSessionsDays,
 		"CREATE_ADMIN":                           o.createAdmin,
+		"DATABASE_CONNECTION_LIFETIME":           o.databaseConnectionLifetime,
 		"DATABASE_MAX_CONNS":                     o.databaseMaxConns,
 		"DATABASE_MIN_CONNS":                     o.databaseMinConns,
-		"DATABASE_CONNECTION_LIFETIME":           o.databaseConnectionLifetime,
 		"DATABASE_URL":                           redactSecretValue(o.databaseURL, redactSecret),
 		"DEBUG":                                  o.debug,
 		"DISABLE_HSTS":                           !o.hsts,
-		"DISABLE_SCHEDULER_SERVICE":              !o.schedulerService,
 		"DISABLE_HTTP_SERVICE":                   !o.httpService,
+		"DISABLE_SCHEDULER_SERVICE":              !o.schedulerService,
 		"FETCH_YOUTUBE_WATCH_TIME":               o.fetchYouTubeWatchTime,
-		"HTTPS":                                  o.HTTPS,
 		"HTTP_CLIENT_MAX_BODY_SIZE":              o.httpClientMaxBodySize,
 		"HTTP_CLIENT_PROXY":                      o.httpClientProxy,
 		"HTTP_CLIENT_TIMEOUT":                    o.httpClientTimeout,
 		"HTTP_CLIENT_USER_AGENT":                 o.httpClientUserAgent,
 		"HTTP_SERVER_TIMEOUT":                    o.httpServerTimeout,
 		"HTTP_SERVICE":                           o.httpService,
-		"KEY_FILE":                               o.certKeyFile,
+		"HTTPS":                                  o.HTTPS,
 		"INVIDIOUS_INSTANCE":                     o.invidiousInstance,
+		"KEY_FILE":                               o.certKeyFile,
 		"LISTEN_ADDR":                            o.listenAddr,
 		"LOG_DATE_TIME":                          o.logDateTime,
 		"MAINTENANCE_MESSAGE":                    o.maintenanceMessage,
 		"MAINTENANCE_MODE":                       o.maintenanceMode,
 		"METRICS_ALLOWED_NETWORKS":               strings.Join(o.metricsAllowedNetworks, ","),
 		"METRICS_COLLECTOR":                      o.metricsCollector,
+		"METRICS_PASSWORD":                       redactSecretValue(o.metricsPassword, redactSecret),
 		"METRICS_REFRESH_INTERVAL":               o.metricsRefreshInterval,
 		"METRICS_USERNAME":                       o.metricsUsername,
-		"METRICS_PASSWORD":                       redactSecretValue(o.metricsPassword, redactSecret),
 		"OAUTH2_CLIENT_ID":                       o.oauth2ClientID,
 		"OAUTH2_CLIENT_SECRET":                   redactSecretValue(o.oauth2ClientSecret, redactSecret),
 		"OAUTH2_OIDC_DISCOVERY_ENDPOINT":         o.oauth2OidcDiscoveryEndpoint,
@@ -603,9 +619,9 @@ func (o *Options) SortedOptions(redactSecret bool) []*Option {
 		"POLLING_PARSING_ERROR_LIMIT":            o.pollingParsingErrorLimit,
 		"POLLING_SCHEDULER":                      o.pollingScheduler,
 		"PROXY_HTTP_CLIENT_TIMEOUT":              o.proxyHTTPClientTimeout,
-		"PROXY_PRIVATE_KEY":                      redactSecretValue(string(o.proxyPrivateKey), redactSecret),
 		"PROXY_MEDIA_TYPES":                      o.proxyMediaTypes,
 		"PROXY_OPTION":                           o.proxyOption,
+		"PROXY_PRIVATE_KEY":                      redactSecretValue(string(o.proxyPrivateKey), redactSecret),
 		"PROXY_URL":                              o.proxyUrl,
 		"ROOT_URL":                               o.rootURL,
 		"RUN_MIGRATIONS":                         o.runMigrations,
@@ -613,8 +629,10 @@ func (o *Options) SortedOptions(redactSecret bool) []*Option {
 		"SCHEDULER_ENTRY_FREQUENCY_MIN_INTERVAL": o.schedulerEntryFrequencyMinInterval,
 		"SCHEDULER_SERVICE":                      o.schedulerService,
 		"SERVER_TIMING_HEADER":                   o.serverTimingHeader,
-		"WORKER_POOL_SIZE":                       o.workerPoolSize,
+		"TELEGRAM_BOT_ALLOWED_CHATS":             o.telegramBotAllowedChats,
+		"TELEGRAM_BOT_TOKEN":                     redactSecretValue(o.telegramBotToken, redactSecret),
 		"WATCHDOG":                               o.watchdog,
+		"WORKER_POOL_SIZE":                       o.workerPoolSize,
 	}
 
 	keys := make([]string, 0, len(keyValues))

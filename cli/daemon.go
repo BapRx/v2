@@ -17,6 +17,7 @@ import (
 	"miniflux.app/metric"
 	"miniflux.app/service/httpd"
 	"miniflux.app/service/scheduler"
+	"miniflux.app/service/telegrambot"
 	"miniflux.app/storage"
 	"miniflux.app/systemd"
 	"miniflux.app/worker"
@@ -33,6 +34,10 @@ func startDaemon(store *storage.Storage) {
 
 	if config.Opts.HasSchedulerService() && !config.Opts.HasMaintenanceMode() {
 		scheduler.Serve(store, pool)
+	}
+
+	if config.Opts.TelegramBotToken() != "" && len(config.Opts.TelegramBotAllowedChats()) > 0 {
+		telegrambot.Serve(store, pool, config.Opts.TelegramBotToken(), config.Opts.TelegramBotAllowedChats())
 	}
 
 	var httpServer *http.Server

@@ -9,20 +9,14 @@ import (
 	"fmt"
 	"html/template"
 	"strconv"
-	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"miniflux.app/logger"
 	"miniflux.app/model"
+	"miniflux.app/telegrambot/client"
 )
 
 // PushEntry pushes entry to telegram chat using integration settings provided
-func PushEntry(entry *model.Entry, botToken string, chatID string, sendContent bool) error {
-	bot, err := tgbotapi.NewBotAPI(botToken)
-	if err != nil {
-		return fmt.Errorf("telegrambot: bot creation failed: %w", err)
-	}
-
+func PushEntry(entry *model.Entry, botToken, chatID string, sendContent bool) error {
 	tplStr := "<b>{{ .Title }}</b>"
 	if sendContent {
 		tplStr += "\n\n{{ .Content }}"
@@ -52,17 +46,7 @@ func PushEntry(entry *model.Entry, botToken string, chatID string, sendContent b
 		buttonRow = append(buttonRow, commentButton)
 	}
 	msg.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(buttonRow)
-	if _, err := bot.Send(msg); err != nil {
-		if err.Error() == "Too Many Requests" {
-			logger.Debug("telegrambot: rate limited while sending message, sleeping for 5 seconds")
-			time.Sleep(5)
-			if _, err := bot.Send(msg); err != nil {
-				return fmt.Errorf("telegrambot: sending message failed: %w", err)
-			}
-		} else {
-			return fmt.Errorf("telegrambot: sending message failed: %w", err)
-		}
-	}
+	client.SendMessage(msg)
 
 	return nil
 }
