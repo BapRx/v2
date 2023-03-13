@@ -11,40 +11,42 @@ import (
 	"strconv"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"miniflux.app/logger"
 	"miniflux.app/model"
 	"miniflux.app/telegrambot/client"
 )
 
+func renderTemplate(tplStr string, data interface{}) string {
+	tpl, err := template.New("footer").Parse(tplStr)
+	if err != nil {
+		logger.Error("[telegrambot]: template parsing failed: %w", err)
+		return ""
+	}
+	var result bytes.Buffer
+	if err := tpl.Execute(&result, data); err != nil {
+		logger.Error("[telegrambot]: template execution failed: %w", err)
+		return ""
+	}
+	return result.String()
+}
+
 // PushEntry pushes entry to telegram chat using integration settings provided
 func PushEntry(entry *model.Entry, botToken, chatID string, previewLengthStr string) error {
-	tplTitle, err := template.New("title").Parse("<b>{{ .Title }}</b>")
-	if err != nil {
-		return fmt.Errorf("telegrambot: template parsing failed: %w", err)
-	}
-	var resultTitle bytes.Buffer
-	if err := tplTitle.Execute(&resultTitle, entry); err != nil {
-		return fmt.Errorf("telegrambot: template execution failed: %w", err)
-	}
-	message := resultTitle.String()
+	title := renderTemplate("<b>{{ .Title }}</b>", entry)
+	message := title
 	previewLength, err := strconv.Atoi(previewLengthStr)
 	if err != nil {
-		return fmt.Errorf("telegrambot: preview length type conversion failed: %w", err)
+		return fmt.Errorf("[telegrambot]: preview length type conversion failed: %w", err)
 	}
 	if previewLength > 0 {
-		tplContent, err := template.New("content").Parse("\n\n{{ .Content }}")
-		if err != nil {
-			return fmt.Errorf("telegrambot: template parsing failed: %w", err)
-		}
-		var resultTitle bytes.Buffer
-		if err := tplContent.Execute(&resultTitle, entry); err != nil {
-			return fmt.Errorf("telegrambot: template execution failed: %w", err)
-		}
-		content := resultTitle.String()
-		if resultTitle.Len() > previewLength {
+		content := renderTemplate("\n\n{{ .Content }}", entry)
+		if len(content) > previewLength {
 			content = content[0:previewLength]
 		}
 		message += content
 	}
+	footer := renderTemplate("\n\n<i>{{ .Date }} - {{ .Author }}</i>", entry)
+	message += footer
 
 	chatIDInt, _ := strconv.ParseInt(chatID, 10, 64)
 	msg := tgbotapi.NewMessage(chatIDInt, message)
