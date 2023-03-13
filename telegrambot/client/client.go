@@ -5,26 +5,44 @@
 package client // import "miniflux.app/telegram/client"
 
 import (
+	"fmt"
+	"reflect"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"miniflux.app/logger"
 )
 
-var bot *tgbotapi.BotAPI
+var bots = make(map[string]tgbotapi.BotAPI)
 
-// Serve get updates from the Telegram API
-func New(botToken string) *tgbotapi.BotAPI {
+// Create a new Telegram bot API client.
+func New(botToken, chatID string) error {
+	var bot *tgbotapi.BotAPI
 	var err error
 	bot, err = tgbotapi.NewBotAPI(botToken)
 	if err != nil {
-		logger.Fatal("Telegram bot failed to start: %w", err)
+		return err
 	}
-
-	return bot
+	bots[chatID] = *bot
+	return nil
 }
 
-func SendMessage(msg tgbotapi.MessageConfig) {
+// Returns a Telegram bot API client from a Chat ID.
+func Get(chatID string) (tgbotapi.BotAPI, error) {
+	spew.Dump(reflect.ValueOf(bots).MapKeys())
+	bot, ok := bots[chatID]
+	if !ok {
+		return tgbotapi.BotAPI{}, fmt.Errorf("There is no running Telegram bot for the provided chat ID (%s)", chatID)
+	}
+	return bot, nil
+}
+
+func SendMessage(chatID string, msg tgbotapi.MessageConfig) error {
+	bot, err := Get(chatID)
+	if err != nil {
+		return err
+	}
 	if _, err := bot.Send(msg); err != nil {
 		if err.Error() == "Too Many Requests" {
 			logger.Debug("telegram: rate limited while sending message, sleeping for 5 seconds")
@@ -36,4 +54,5 @@ func SendMessage(msg tgbotapi.MessageConfig) {
 			logger.Error("telegram: sending message failed: %w", err)
 		}
 	}
+	return nil
 }

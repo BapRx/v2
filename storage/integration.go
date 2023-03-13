@@ -7,8 +7,10 @@ package storage // import "miniflux.app/storage"
 import (
 	"database/sql"
 	"fmt"
+	"log"
 
 	"golang.org/x/crypto/bcrypt"
+	"miniflux.app/logger"
 	"miniflux.app/model"
 )
 
@@ -144,6 +146,49 @@ func (s *Storage) UserByTelegramChatID(chatID int64) (*model.User, error) {
 		return nil, fmt.Errorf("store: unable to fetch user: %v", err)
 	default:
 		return &user, nil
+	}
+}
+
+// GetConfiguredTelegramIntegrations returns a list of configured Telegram integrations.
+func (s *Storage) GetConfiguredTelegramIntegrations() ([]*model.Integration, error) {
+	query := `
+		SELECT
+			telegram_bot_chat_id, telegram_bot_token
+		FROM
+			integrations
+		LEFT JOIN
+			users ON users.id=integrations.user_id
+		WHERE
+			telegram_bot_chat_id != '' AND telegram_bot_token != '';
+	`
+
+	rows, err := s.db.Query(query)
+
+	if err != nil {
+		logger.Fatal("Error", err)
+	}
+	defer rows.Close()
+
+	var integrations []*model.Integration
+	for rows.Next() {
+		var integration model.Integration
+		err := rows.Scan(&integration.TelegramBotChatID, &integration.TelegramBotToken)
+		if err != nil {
+			log.Fatal(err)
+		}
+		integrations = append(integrations, &integration)
+		switch {
+		case err != nil:
+			return nil, fmt.Errorf("store: unable to fetch integration: %v", err)
+		}
+	}
+	switch {
+	case err == sql.ErrNoRows:
+		return nil, nil
+	case err != nil:
+		return nil, fmt.Errorf("store: unable to fetch integration: %v", err)
+	default:
+		return integrations, nil
 	}
 }
 

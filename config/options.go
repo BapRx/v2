@@ -76,8 +76,6 @@ const (
 	defaultMetricsPassword                    = ""
 	defaultWatchdog                           = true
 	defaultInvidiousInstance                  = "yewtu.be"
-	defaultTelegramBotToken                   = ""
-	defaultTelegramBotAllowedChats            = ""
 )
 
 var defaultHTTPClientUserAgent = "Mozilla/5.0 (compatible; Miniflux/" + version.Version + "; +https://miniflux.app)"
@@ -153,8 +151,6 @@ type Options struct {
 	watchdog                           bool
 	invidiousInstance                  string
 	proxyPrivateKey                    []byte
-	telegramBotToken                   string
-	telegramBotAllowedChats            []string
 }
 
 // NewOptions returns Options with default values.
@@ -224,8 +220,6 @@ func NewOptions() *Options {
 		watchdog:                           defaultWatchdog,
 		invidiousInstance:                  defaultInvidiousInstance,
 		proxyPrivateKey:                    randomKey,
-		telegramBotToken:                   defaultTelegramBotToken,
-		telegramBotAllowedChats:            []string{defaultTelegramBotAllowedChats},
 	}
 }
 
@@ -553,16 +547,6 @@ func (o *Options) ProxyPrivateKey() []byte {
 	return o.proxyPrivateKey
 }
 
-// TelegramBotToken returns the Bot token to interact with the Telegram API
-func (o *Options) TelegramBotToken() string {
-	return o.telegramBotToken
-}
-
-// TelegramBotAllowedChats returns a list of allowed Telegram chats ID to interact with the bot
-func (o *Options) TelegramBotAllowedChats() []string {
-	return o.telegramBotAllowedChats
-}
-
 // SortedOptions returns options as a list of key value pairs, sorted by keys.
 func (o *Options) SortedOptions(redactSecret bool) []*Option {
 	var keyValues = map[string]interface{}{
@@ -629,8 +613,6 @@ func (o *Options) SortedOptions(redactSecret bool) []*Option {
 		"SCHEDULER_ENTRY_FREQUENCY_MIN_INTERVAL": o.schedulerEntryFrequencyMinInterval,
 		"SCHEDULER_SERVICE":                      o.schedulerService,
 		"SERVER_TIMING_HEADER":                   o.serverTimingHeader,
-		"TELEGRAM_BOT_ALLOWED_CHATS":             o.telegramBotAllowedChats,
-		"TELEGRAM_BOT_TOKEN":                     redactSecretValue(o.telegramBotToken, redactSecret),
 		"WATCHDOG":                               o.watchdog,
 		"WORKER_POOL_SIZE":                       o.workerPoolSize,
 	}

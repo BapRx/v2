@@ -28,7 +28,7 @@ func PushEntry(entry *model.Entry, botToken, chatID string, previewLengthStr str
 	message := resultTitle.String()
 	previewLength, err := strconv.Atoi(previewLengthStr)
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("telegrambot: preview length type conversion failed: %w", err)
 	}
 	if previewLength > 0 {
 		tplContent, err := template.New("content").Parse("\n\n{{ .Content }}")
@@ -64,7 +64,7 @@ func PushEntry(entry *model.Entry, botToken, chatID string, previewLengthStr str
 		buttonRow = append(buttonRow, commentButton)
 	}
 	msg.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(buttonRow)
-	client.SendMessage(msg)
+	client.SendMessage(chatID, msg)
 
 	return nil
 }
