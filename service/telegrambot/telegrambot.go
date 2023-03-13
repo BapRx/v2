@@ -7,6 +7,7 @@ package telegrambot // import "miniflux.app/service/telegrambot"
 import (
 	"fmt"
 	"log"
+	"strconv"
 	"strings"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -18,18 +19,22 @@ import (
 )
 
 // Serve get updates from the Telegram API
-func Serve(store *storage.Storage, pool *worker.Pool, botToken string, allowedChatIDs []string) error {
+func Serve(store *storage.Storage, pool *worker.Pool, botToken string, allowedChatID string) error {
 	bot := client.New(botToken)
-	go getUpdates(bot, store, pool, allowedChatIDs)
+	go getUpdates(bot, store, pool, allowedChatID)
 
 	return nil
 }
 
-func getUpdates(bot *tgbotapi.BotAPI, store *storage.Storage, pool *worker.Pool, allowedChatIDs []string) {
+func getUpdates(bot *tgbotapi.BotAPI, store *storage.Storage, pool *worker.Pool, allowedChatIDStr string) {
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
 	updates := bot.GetUpdatesChan(u)
+	allowedChatID, _ := strconv.ParseInt(allowedChatIDStr, 10, 64)
 	for update := range updates {
+		if update.FromChat().ID != allowedChatID {
+			continue
+		}
 		if update.Message != nil {
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "")
 			switch update.Message.Command() {

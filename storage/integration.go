@@ -36,6 +36,14 @@ func (s *Storage) HasDuplicateTelegramChatID(userID int64, telegram_bot_chat_id 
 	return result
 }
 
+// HasDuplicateTelegramBotToken checks if another user has the same Telegram bot token.
+func (s *Storage) HasDuplicateTelegramBotToken(userID int64, telegram_bot_token string) bool {
+	query := `SELECT true FROM integrations WHERE user_id != $1 AND telegram_bot_token=$2`
+	var result bool
+	s.db.QueryRow(query, userID, telegram_bot_token).Scan(&result)
+	return result
+}
+
 // UserByFeverToken returns a user by using the Fever API token.
 func (s *Storage) UserByFeverToken(token string) (*model.User, error) {
 	query := `

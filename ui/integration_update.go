@@ -64,10 +64,32 @@ func (h *handler) updateIntegration(w http.ResponseWriter, r *http.Request) {
 		integration.GoogleReaderPassword = ""
 	}
 
-	if integration.TelegramBotPreviewLength != "" {
-		i, err := strconv.ParseInt(integration.TelegramBotPreviewLength, 10, 16)
+	if integration.TelegramBotChatID != "" {
+		if h.store.HasDuplicateTelegramChatID(user.ID, integration.TelegramBotChatID) {
+			sess.NewFlashErrorMessage(printer.Printf("error.duplicate_telegram_chat_id"))
+			html.Redirect(w, r, route.Path(h.router, "integrations"))
+			return
+		}
+		_, err := strconv.ParseInt(integration.TelegramBotChatID, 10, 64)
 		if err != nil {
-			panic(err)
+			sess.NewFlashErrorMessage(printer.Printf("error.invalid_format_expected_number"))
+			html.Redirect(w, r, route.Path(h.router, "integrations"))
+			return
+		}
+	}
+
+	if integration.TelegramBotToken != "" && h.store.HasDuplicateTelegramBotToken(user.ID, integration.TelegramBotToken) {
+		sess.NewFlashErrorMessage(printer.Printf("error.duplicate_telegram_bot_token"))
+		html.Redirect(w, r, route.Path(h.router, "integrations"))
+		return
+	}
+
+	if integration.TelegramBotPreviewLength != "" {
+		i, err := strconv.ParseInt(integration.TelegramBotPreviewLength, 10, 64)
+		if err != nil {
+			sess.NewFlashErrorMessage(printer.Printf("error.invalid_format_expected_number"))
+			html.Redirect(w, r, route.Path(h.router, "integrations"))
+			return
 		}
 		if i < 0 || i > 4096 {
 			sess.NewFlashErrorMessage(printer.Printf("error.telegram_preview_length_out_of_bound"))

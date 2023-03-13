@@ -37,7 +37,7 @@ func startDaemon(store *storage.Storage) {
 	}
 
 	if config.Opts.TelegramBotToken() != "" && len(config.Opts.TelegramBotAllowedChats()) > 0 {
-		telegrambot.Serve(store, pool, config.Opts.TelegramBotToken(), config.Opts.TelegramBotAllowedChats())
+		telegrambot.Serve(store, pool, config.Opts.TelegramBotToken(), config.Opts.TelegramBotAllowedChats()[0])
 	}
 
 	var httpServer *http.Server
