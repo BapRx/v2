@@ -46,7 +46,7 @@ func SendMessage(chatID string, msg tgbotapi.MessageConfig) error {
 	if _, err := bot.Send(msg); err != nil {
 		if err.Error() == "Too Many Requests" {
 			logger.Debug("telegram: rate limited while sending message, sleeping for 5 seconds")
-			time.Sleep(5)
+			time.Sleep(5 * time.Second)
 			if _, err := bot.Send(msg); err != nil {
 				logger.Error("telegram: sending message failed: %w", err)
 			}
