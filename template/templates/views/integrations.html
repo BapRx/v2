@@ -209,8 +209,9 @@
         <label for="form-telegram-chat-id">{{ t "form.integration.telegram_chat_id" }}</label>
         <input type="text" name="telegram_bot_chat_id" id="form-telegram-chat-id" value="{{ .form.TelegramBotChatID }}" spellcheck="false">
 
+        <label for="telegram-preview-length">{{ t "form.integration.telegram_preview_length" }}</label>
         <label>
-            <input type="checkbox" name="telegram_bot_send_content" value="1" {{ if .form.TelegramBotSendContent }}checked{{ end }}> {{ t "form.integration.telegram_bot_send_content" }}
+            <input type="number" name="telegram_bot_preview_length" min="0" max="4096" value="{{ .form.TelegramBotPreviewLength }}">
         </label>
 
         <div class="buttons">

@@ -103,7 +103,11 @@
   "page.feeds.last_check": "Остання перевірка:",
   "page.feeds.unread_counter": "Кількість непрочитаних записів",
   "page.feeds.read_counter": "Кількість прочитаних записів",
-  "page.feeds.error_count": ["%d помилка", "%d помилки", "%d помилок"],
+  "page.feeds.error_count": [
+    "%d помилка",
+    "%d помилки",
+    "%d помилок"
+  ],
   "page.history.title": "Історія",
   "page.import.title": "Імпорт",
   "page.search.title": "Результати пошуку",
@@ -264,6 +268,7 @@
   "error.user_mandatory_fields": "Ім’я користувача є обов’язковим.",
   "error.api_key_already_exists": "Такий ключ API вже існує.",
   "error.unable_to_create_api_key": "Не вдається створити такий ключ API",
+  "error.telegram_preview_length_out_of_bound": "TODO",
   "form.feed.label.title": "Назва",
   "form.feed.label.site_url": "URL-адреса сайту",
   "form.feed.label.feed_url": "URL-адреса стрічки",
@@ -353,6 +358,7 @@
   "form.integration.telegram_bot_activate": "Відправляти нові статті до чату Telegram",
   "form.integration.telegram_bot_token": "Токен боту",
   "form.integration.telegram_chat_id": "ID чату",
+  "form.integration.telegram_preview_length": "TODO",
   "form.integration.linkding_activate": "Зберігати статті до Linkding",
   "form.integration.linkding_endpoint": "Linkding API Endpoint",
   "form.integration.linkding_api_key": "Ключ API Linkding",
@@ -372,13 +378,29 @@
     "%d хвилини тому",
     "%d хвилин тому"
   ],
-  "time_elapsed.hours": ["%d годину тому", "%d години тому", "%d годин тому"],
-  "time_elapsed.days": ["%d день тому", "%d дні тому", "%d днів тому"],
-  "time_elapsed.weeks": ["%d тиждень тому", "%d тижня тому", "%d тижнів тому"],
+  "time_elapsed.hours": [
+    "%d годину тому",
+    "%d години тому",
+    "%d годин тому"
+  ],
+  "time_elapsed.days": [
+    "%d день тому",
+    "%d дні тому",
+    "%d днів тому"
+  ],
+  "time_elapsed.weeks": [
+    "%d тиждень тому",
+    "%d тижня тому",
+    "%d тижнів тому"
+  ],
   "time_elapsed.months": [
     "%d місяць тому",
     "%d місяця тому",
     "%d місяців  тому"
   ],
-  "time_elapsed.years": ["%d рік тому", "%d роки тому", "%d років тому"]
+  "time_elapsed.years": [
+    "%d рік тому",
+    "%d роки тому",
+    "%d років тому"
+  ]
 }

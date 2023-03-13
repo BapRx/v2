@@ -16,27 +16,38 @@ import (
 )
 
 // PushEntry pushes entry to telegram chat using integration settings provided
-func PushEntry(entry *model.Entry, botToken, chatID string, sendContent bool) error {
-	tplStr := "<b>{{ .Title }}</b>"
-	if sendContent {
-		tplStr += "\n\n{{ .Content }}"
-	}
-	tpl, err := template.New("message").Parse(tplStr)
+func PushEntry(entry *model.Entry, botToken, chatID string, previewLengthStr string) error {
+	tplTitle, err := template.New("title").Parse("<b>{{ .Title }}</b>")
 	if err != nil {
 		return fmt.Errorf("telegrambot: template parsing failed: %w", err)
 	}
-
-	var result bytes.Buffer
-	if err := tpl.Execute(&result, entry); err != nil {
+	var resultTitle bytes.Buffer
+	if err := tplTitle.Execute(&resultTitle, entry); err != nil {
 		return fmt.Errorf("telegrambot: template execution failed: %w", err)
+	}
+	message := resultTitle.String()
+	previewLength, err := strconv.Atoi(previewLengthStr)
+	if err != nil {
+		panic(err)
+	}
+	if previewLength > 0 {
+		tplContent, err := template.New("content").Parse("\n\n{{ .Content }}")
+		if err != nil {
+			return fmt.Errorf("telegrambot: template parsing failed: %w", err)
+		}
+		var resultTitle bytes.Buffer
+		if err := tplContent.Execute(&resultTitle, entry); err != nil {
+			return fmt.Errorf("telegrambot: template execution failed: %w", err)
+		}
+		content := resultTitle.String()
+		if resultTitle.Len() > previewLength {
+			content = content[0:previewLength]
+		}
+		message += content
 	}
 
 	chatIDInt, _ := strconv.ParseInt(chatID, 10, 64)
-	resultStr := result.String()
-	if result.Len() > 4096 {
-		resultStr = resultStr[0:4096]
-	}
-	msg := tgbotapi.NewMessage(chatIDInt, resultStr)
+	msg := tgbotapi.NewMessage(chatIDInt, message)
 	msg.ParseMode = tgbotapi.ModeHTML
 	msg.DisableWebPagePreview = false
 

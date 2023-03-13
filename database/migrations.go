@@ -646,7 +646,7 @@ var migrations = []func(tx *sql.Tx) error{
 	},
 	func(tx *sql.Tx) (err error) {
 		sql := `
-		ALTER TABLE integrations ADD COLUMN telegram_bot_send_content bool default 'f';
+		ALTER TABLE integrations ADD COLUMN telegram_bot_preview_length text default '0';
 		`
 		_, err = tx.Exec(sql)
 		return err

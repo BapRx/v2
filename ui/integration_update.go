@@ -8,6 +8,7 @@ import (
 	"crypto/md5"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"miniflux.app/http/request"
 	"miniflux.app/http/response/html"
@@ -62,6 +63,19 @@ func (h *handler) updateIntegration(w http.ResponseWriter, r *http.Request) {
 	} else {
 		integration.GoogleReaderPassword = ""
 	}
+
+	if integration.TelegramBotPreviewLength != "" {
+		i, err := strconv.ParseInt(integration.TelegramBotPreviewLength, 10, 16)
+		if err != nil {
+			panic(err)
+		}
+		if i < 0 || i > 4096 {
+			sess.NewFlashErrorMessage(printer.Printf("error.telegram_preview_length_out_of_bound"))
+			html.Redirect(w, r, route.Path(h.router, "integrations"))
+			return
+		}
+	}
+
 	err = h.store.UpdateIntegration(integration)
 	if err != nil {
 		html.ServerError(w, r, err)

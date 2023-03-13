@@ -32,21 +32,14 @@ func getUpdates(bot *tgbotapi.BotAPI, store *storage.Storage, pool *worker.Pool,
 	for update := range updates {
 		if update.Message != nil {
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "")
-
 			switch update.Message.Command() {
-			case "readAll":
-				msg.Text = "readAll"
 			case "read_all":
-				var err error
-				var user *model.User
-				if user, err = store.UserByTelegramChatID(update.Message.Chat.ID); err != nil {
-					logger.Error("[Telegram Bot] UserByTelegramChatID failed: %v", err)
-				}
-				if err = store.MarkAllAsRead(user.ID); err != nil {
-					logger.Error("[Telegram Bot] MarkAllAsRead failed: %v", err)
-				} else {
-					msg.Text = "Successfully marked everything as read!"
-				}
+				confirmationButton := tgbotapi.NewInlineKeyboardRow(
+					tgbotapi.NewInlineKeyboardButtonData("Yes!", "read_all/"),
+					tgbotapi.NewInlineKeyboardButtonData("No.", "cancel/"),
+				)
+				msg.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(confirmationButton)
+				msg.Text = "Are you sure?"
 			default:
 				msg.Text = "Available commands: /read_all"
 			}
@@ -62,18 +55,21 @@ func getUpdates(bot *tgbotapi.BotAPI, store *storage.Storage, pool *worker.Pool,
 			logger.Info("action: %s", action)
 			entryHash := data[1]
 			logger.Info("entryHash: %s", entryHash)
-			var user *model.User
+			var entry *model.Entry
+			entryIDSlice := []int64{}
 			var err error
+			if len(entryHash) > 0 {
+				if entry, err = store.EntryByHash(entryHash); err != nil {
+					logger.Error("[Telegram Bot] UserByTelegramChatID failed: %v", err)
+				}
+				entryIDSlice = append(entryIDSlice, entry.ID)
+			}
+			var user *model.User
 			if user, err = store.UserByTelegramChatID(update.CallbackQuery.From.ID); err != nil {
 				logger.Error("[Telegram Bot] UserByTelegramChatID failed: %v", err)
 			}
-			var entry *model.Entry
-			if entry, err = store.EntryByHash(entryHash); err != nil {
-				logger.Error("[Telegram Bot] UserByTelegramChatID failed: %v", err)
-			}
-			entryIDSlice := []int64{}
-			entryIDSlice = append(entryIDSlice, entry.ID)
 			var newCallbackAction string
+			var message string
 			switch action {
 			case "read":
 				logger.Info("Marking entry %d as unread.", entryIDSlice)
@@ -87,26 +83,65 @@ func getUpdates(bot *tgbotapi.BotAPI, store *storage.Storage, pool *worker.Pool,
 					logger.Error("[Telegram Bot] SetEntriesStatus failed: %v", err)
 				}
 				newCallbackAction = "read"
+			case "read_all":
+				logger.Info("Marking all entries as read.")
+				var err error
+				var user *model.User
+				if user, err = store.UserByTelegramChatID(update.CallbackQuery.Message.Chat.ID); err != nil {
+					logger.Error("[Telegram Bot] UserByTelegramChatID failed: %v", err)
+				}
+				if err = store.MarkAllAsRead(user.ID); err != nil {
+					logger.Error("[Telegram Bot] MarkAllAsRead failed: %v", err)
+				} else {
+					message = "Successfully marked everything as read!"
+				}
+			case "cancel":
+				logger.Info("Cancelling action.")
+				msg := tgbotapi.NewEditMessageTextAndMarkup(
+					update.CallbackQuery.Message.Chat.ID,
+					update.CallbackQuery.Message.MessageID,
+					"Action canceled.",
+					tgbotapi.InlineKeyboardMarkup{
+						InlineKeyboard: make([][]tgbotapi.InlineKeyboardButton, 0),
+					},
+				)
+				if _, err := bot.Send(msg); err != nil {
+					log.Panic(err)
+				}
 			}
-			callbackAction := fmt.Sprintf("%s/%s", newCallbackAction, entryHash)
-			if len(callbackAction) > 64 {
-				callbackAction = callbackAction[:64]
-			}
-			buttonRow := tgbotapi.NewInlineKeyboardRow(
-				tgbotapi.NewInlineKeyboardButtonURL("Open", entry.URL),
-				tgbotapi.NewInlineKeyboardButtonData(fmt.Sprintf("Mark as %s", newCallbackAction), callbackAction),
-			)
-			if entry.CommentsURL != "" {
-				commentButton := tgbotapi.NewInlineKeyboardButtonURL("Comments", entry.CommentsURL)
-				buttonRow = append(buttonRow, commentButton)
-			}
-			msg := tgbotapi.NewEditMessageReplyMarkup(
-				update.CallbackQuery.Message.Chat.ID,
-				update.CallbackQuery.Message.MessageID,
-				tgbotapi.NewInlineKeyboardMarkup(buttonRow),
-			)
-			if _, err := bot.Send(msg); err != nil {
-				log.Panic(err)
+			if len(newCallbackAction) > 0 {
+				callbackAction := fmt.Sprintf("%s/%s", newCallbackAction, entryHash)
+				if len(callbackAction) > 64 {
+					callbackAction = callbackAction[:64]
+				}
+				buttonRow := tgbotapi.NewInlineKeyboardRow(
+					tgbotapi.NewInlineKeyboardButtonURL("Open", entry.URL),
+					tgbotapi.NewInlineKeyboardButtonData(fmt.Sprintf("Mark as %s", newCallbackAction), callbackAction),
+				)
+				if entry.CommentsURL != "" {
+					commentButton := tgbotapi.NewInlineKeyboardButtonURL("Comments", entry.CommentsURL)
+					buttonRow = append(buttonRow, commentButton)
+				}
+				msg := tgbotapi.NewEditMessageReplyMarkup(
+					update.CallbackQuery.Message.Chat.ID,
+					update.CallbackQuery.Message.MessageID,
+					tgbotapi.NewInlineKeyboardMarkup(buttonRow),
+				)
+				if _, err := bot.Send(msg); err != nil {
+					log.Panic(err)
+				}
+			} else if len(message) > 0 {
+				msg := tgbotapi.NewEditMessageTextAndMarkup(
+					update.CallbackQuery.Message.Chat.ID,
+					update.CallbackQuery.Message.MessageID,
+					message,
+					tgbotapi.InlineKeyboardMarkup{
+						InlineKeyboard: make([][]tgbotapi.InlineKeyboardButton, 0),
+					},
+				)
+				if _, err := bot.Send(msg); err != nil {
+					log.Panic(err)
+				}
 			}
 		}
 	}
