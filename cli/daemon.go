@@ -36,7 +36,9 @@ func startDaemon(store *storage.Storage) {
 		scheduler.Serve(store, pool)
 	}
 
-	telegrambot.Serve(store)
+	if err := telegrambot.Serve(store); err != nil {
+		logger.Error("Error while starting the Telegram bots: %v", err)
+	}
 
 	var httpServer *http.Server
 	if config.Opts.HasHTTPService() {
