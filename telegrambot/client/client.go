@@ -6,10 +6,8 @@ package client // import "miniflux.app/telegram/client"
 
 import (
 	"fmt"
-	"reflect"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"miniflux.app/logger"
 )
@@ -30,7 +28,6 @@ func New(botToken, chatID string) error {
 
 // Returns a Telegram bot API client from a Chat ID.
 func Get(chatID string) (tgbotapi.BotAPI, error) {
-	spew.Dump(reflect.ValueOf(bots).MapKeys())
 	bot, ok := bots[chatID]
 	if !ok {
 		return tgbotapi.BotAPI{}, fmt.Errorf("There is no running Telegram bot for the provided chat ID (%s)", chatID)

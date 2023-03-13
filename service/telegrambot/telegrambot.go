@@ -10,7 +10,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/davecgh/go-spew/spew"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"miniflux.app/logger"
 	"miniflux.app/model"
@@ -39,7 +38,6 @@ func Serve(store *storage.Storage) error {
 
 func getUpdates(store *storage.Storage, chatIDStr string) {
 	bot, err := client.Get(chatIDStr)
-	spew.Dump(bot)
 	if err != nil {
 		logger.Error("[Telegram Bot] Unable to grab the Telegram bot: %v", err)
 	}
