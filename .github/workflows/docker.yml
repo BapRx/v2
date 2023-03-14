@@ -14,6 +14,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
         with:
+          ref: feat/enhance-telegram-bot # FIXME
           fetch-depth: 0
 
       - name: Generate Alpine Docker tag
@@ -28,7 +29,7 @@ jobs:
           DOCKER_VERSION=${GITHUB_REF#refs/tags/}
           TAGS="${DOCKER_IMAGE}:${DOCKER_VERSION},ghcr.io/${DOCKER_IMAGE}:${DOCKER_VERSION},${DOCKER_IMAGE}:latest,ghcr.io/${DOCKER_IMAGE}:latest"
           fi
-          echo ::set-output name=tags::${TAGS}
+          echo tags=${TAGS} >> $GITHUB_OUTPUT
 
       - name: Generate Distroless Docker tag
         id: docker_distroless_tag
@@ -42,7 +43,7 @@ jobs:
           DOCKER_VERSION=${GITHUB_REF#refs/tags/}-distroless
           TAGS="${DOCKER_IMAGE}:${DOCKER_VERSION},ghcr.io/${DOCKER_IMAGE}:${DOCKER_VERSION},${DOCKER_IMAGE}:latest-distroless,ghcr.io/${DOCKER_IMAGE}:latest-distroless"
           fi
-          echo ::set-output name=tags::${TAGS}
+          echo tags=${TAGS} >> $GITHUB_OUTPUT
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
