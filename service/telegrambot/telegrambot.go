@@ -24,12 +24,15 @@ func Serve(store *storage.Storage) error {
 		return fmt.Errorf("[Telegram Bot] Unable to fetch the configured Telegram integrations: %v", err)
 	} else {
 		s := reflect.ValueOf(telegramIntegrations)
-		for i := 0; i < s.Len(); i++ {
-			integration := s.Index(i).Interface().(*model.Integration)
-			if err := client.New(integration.TelegramBotToken, integration.TelegramBotChatID); err != nil {
-				return fmt.Errorf("[Telegram Bot] Unable to start the Telegram bot: %v", err)
+		if botCount := s.Len(); botCount > 0 {
+			logger.Info("Starting %d Telegram bots in the background", botCount)
+			for i := 0; i < botCount; i++ {
+				integration := s.Index(i).Interface().(*model.Integration)
+				if err := client.New(integration.TelegramBotToken, integration.TelegramBotChatID); err != nil {
+					return fmt.Errorf("[Telegram Bot] Unable to start the Telegram bot: %v", err)
+				}
+				go getUpdates(store, integration.TelegramBotChatID)
 			}
-			go getUpdates(store, integration.TelegramBotChatID)
 		}
 	}
 
