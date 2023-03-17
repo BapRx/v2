@@ -14,6 +14,8 @@ import (
 	"miniflux.app/http/response/html"
 	"miniflux.app/http/route"
 	"miniflux.app/locale"
+	"miniflux.app/logger"
+	"miniflux.app/service/telegrambot"
 	"miniflux.app/ui/form"
 	"miniflux.app/ui/session"
 )
@@ -64,24 +66,32 @@ func (h *handler) updateIntegration(w http.ResponseWriter, r *http.Request) {
 		integration.GoogleReaderPassword = ""
 	}
 
-	if integration.TelegramBotChatID != "" {
-		if h.store.HasDuplicateTelegramChatID(user.ID, integration.TelegramBotChatID) {
-			sess.NewFlashErrorMessage(printer.Printf("error.duplicate_telegram_chat_id"))
+	if integration.TelegramBotChatID != "" || integration.TelegramBotToken != "" {
+		if integration.TelegramBotChatID != "" {
+			if h.store.HasDuplicateTelegramChatID(user.ID, integration.TelegramBotChatID) {
+				sess.NewFlashErrorMessage(printer.Printf("error.duplicate_telegram_chat_id"))
+				html.Redirect(w, r, route.Path(h.router, "integrations"))
+				return
+			}
+			// Check Telegram chat ID format
+			_, err := strconv.ParseInt(integration.TelegramBotChatID, 10, 64)
+			if err != nil {
+				sess.NewFlashErrorMessage(printer.Printf("error.invalid_format_expected_number"))
+				html.Redirect(w, r, route.Path(h.router, "integrations"))
+				return
+			}
+		}
+		if integration.TelegramBotToken != "" && h.store.HasDuplicateTelegramBotToken(user.ID, integration.TelegramBotToken) {
+			sess.NewFlashErrorMessage(printer.Printf("error.duplicate_telegram_bot_token"))
 			html.Redirect(w, r, route.Path(h.router, "integrations"))
 			return
 		}
-		_, err := strconv.ParseInt(integration.TelegramBotChatID, 10, 64)
-		if err != nil {
-			sess.NewFlashErrorMessage(printer.Printf("error.invalid_format_expected_number"))
-			html.Redirect(w, r, route.Path(h.router, "integrations"))
-			return
+		// Check if the bot is already running
+		if integration.TelegramBotChatID != "" && integration.TelegramBotToken != "" {
+			if err := telegrambot.AddBot(h.store, integration.TelegramBotToken, integration.TelegramBotChatID); err != nil {
+				logger.Error("[Integrations] Failed configuring the new bot: %v", err)
+			}
 		}
-	}
-
-	if integration.TelegramBotToken != "" && h.store.HasDuplicateTelegramBotToken(user.ID, integration.TelegramBotToken) {
-		sess.NewFlashErrorMessage(printer.Printf("error.duplicate_telegram_bot_token"))
-		html.Redirect(w, r, route.Path(h.router, "integrations"))
-		return
 	}
 
 	if integration.TelegramBotPreviewLength != "" {

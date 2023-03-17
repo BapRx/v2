@@ -29,12 +29,27 @@ func Serve(store *storage.Storage) error {
 			for i := 0; i < botCount; i++ {
 				integration := s.Index(i).Interface().(*model.Integration)
 				if err := client.New(integration.TelegramBotToken, integration.TelegramBotChatID); err != nil {
-					return fmt.Errorf("[Telegram Bot] Unable to start the Telegram bot: %v", err)
+					return err
 				}
 				go getUpdates(store, integration.TelegramBotChatID)
 			}
 		}
 	}
+
+	return nil
+}
+
+// Configure a new bot
+func AddBot(store *storage.Storage, botToken, chatID string) error {
+	bot, _ := client.Get(chatID)
+	if (bot != tgbotapi.BotAPI{}) {
+		return nil
+	} else {
+		if err := client.New(botToken, chatID); err != nil {
+			return fmt.Errorf("[Intergrations] Failed to start the new Telegram bot: %v", err)
+		}
+	}
+	go getUpdates(store, chatID)
 
 	return nil
 }

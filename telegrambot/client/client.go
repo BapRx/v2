@@ -22,6 +22,7 @@ func New(botToken, chatID string) error {
 	if err != nil {
 		return err
 	}
+	logger.Info("[Telegram] Bot configured for the chat ID %s", chatID)
 	bots[chatID] = *bot
 	return nil
 }
