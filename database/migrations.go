@@ -646,7 +646,16 @@ var migrations = []func(tx *sql.Tx) error{
 	},
 	func(tx *sql.Tx) (err error) {
 		sql := `
-		ALTER TABLE integrations ADD COLUMN telegram_bot_preview_length text default '0';
+			ALTER TABLE users RENAME double_tap TO gesture_nav;
+			ALTER TABLE users ALTER COLUMN gesture_nav SET DATA TYPE text using case when gesture_nav = true then 'tap' when gesture_nav = false then 'none' end;
+			ALTER TABLE users ALTER COLUMN gesture_nav SET default 'tap';
+		`
+		_, err = tx.Exec(sql)
+		return err
+	},
+	func(tx *sql.Tx) (err error) {
+		sql := `
+			ALTER TABLE integrations ADD COLUMN telegram_bot_preview_length text default '0';
 		`
 		_, err = tx.Exec(sql)
 		return err
